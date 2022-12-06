@@ -222,4 +222,45 @@ const deleteMovie = (req, res) => {
 		});
 };
 
-module.exports = { getAllMovies, getMovieById, createMovie, updateMovie, deleteMovie };
+const searchMovies = (req, res) => {
+	// get search query from :keyword
+	const keyword = req.params.keyword;
+
+	// check redis cache
+	client.get(keyword, (err, movies) => {
+		// handle error
+		if (err) {
+			console.log(err);
+			res.status(500).json({
+				error: err.message,
+			});
+		}
+
+		// return data from cache
+		if (movies) {
+			console.log('from cache');
+			res.json(JSON.parse(movies));
+		}
+
+		// return data from database
+		else {
+			Movie.find({
+				$or: [{ title: { $regex: keyword, $options: 'i' } }, { director: { $regex: keyword, $options: 'i' } }],
+			})
+				.then((movies) => {
+					console.log('from database');
+					res.json(movies);
+
+					// save to redis cache
+					client.setex(keyword, 3600, JSON.stringify(movies));
+				})
+				.catch((err) => {
+					res.status(500).json({
+						error: err.message,
+					});
+				});
+		}
+	});
+};
+
+module.exports = { getAllMovies, getMovieById, createMovie, updateMovie, deleteMovie, searchMovies };

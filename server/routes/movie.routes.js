@@ -19,4 +19,7 @@ router.put('/movies/:id', movieController.updateMovie);
 // delete a movie
 router.delete('/movies/:id', movieController.deleteMovie);
 
+// search movies
+router.get('/movies/search/:keyword', movieController.searchMovies);
+
 module.exports = router;
