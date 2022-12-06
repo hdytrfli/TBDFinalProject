@@ -6,6 +6,33 @@ const getAllMovies = (req, res) => {
 	// get limit from req query
 	const limit = req.query.limit ? parseInt(req.query.limit) : 10;
 
+	// validate limit
+	if (limit < 1 || limit > 100) {
+		res.status(400).json({
+			error: 'Limit must be between 1 and 100',
+		});
+	}
+
+	// add sorting by rating, year, title
+	const sort = req.query.sort ? req.query.sort : 'title';
+
+	// validate sort
+	if (sort !== 'rating' && sort !== 'year' && sort !== 'title') {
+		res.status(400).json({
+			error: 'Sort must be rating, year or title',
+		});
+	}
+
+	// ascending or descending
+	const order = req.query.order ? req.query.order : 'asc';
+
+	// validate order
+	if (order !== 'asc' && order !== 'desc') {
+		res.status(400).json({
+			error: 'Order must be asc or desc',
+		});
+	}
+
 	// check redis cache
 	client.get('movies', (err, movies) => {
 		// handle error
@@ -19,13 +46,21 @@ const getAllMovies = (req, res) => {
 		// return data from cache
 		if (movies) {
 			console.log('from cache');
-			res.json(JSON.parse(movies));
+			res.status(200).json(
+				JSON.parse(movies)
+					.sort((a, b) => {
+						return order === 'asc' ? a[sort] - b[sort] : b[sort] - a[sort];
+					})
+					.slice(0, limit)
+			);
 		}
 
 		// return data from database
 		else {
+			// add sorting by rating, year, title
 			Movie.find()
 				.limit(limit)
+				.sort({ [sort]: order })
 				.then((movies) => {
 					console.log('from database');
 					res.json(movies);
