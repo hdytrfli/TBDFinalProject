@@ -34,7 +34,7 @@ This project is an example of a RESTful API that allows users to manage a collec
 
     `cp .env.example .env`
 
-    Edit the `.env` file to set the ` PORT``,  `MONGODB_URI`, etc.
+    Edit the `.env` file to set the `PORT`, `MONGODB_URI`, etc.
 
 4. Start the development server
 
